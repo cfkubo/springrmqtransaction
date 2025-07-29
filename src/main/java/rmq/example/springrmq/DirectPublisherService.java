@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ConcurrentNavigableMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -26,6 +27,38 @@ public class DirectPublisherService {
     private final ConcurrentNavigableMap<Long, String> outstandingConfirms = new ConcurrentSkipListMap<>();
     private final List<TransactionRecord> publishedRecords = new CopyOnWriteArrayList<>();
     private final AtomicLong confirmCount = new AtomicLong();
+    private final Map<String, AtomicLong> publishedCount = new ConcurrentHashMap<>();
+    private final Map<String, AtomicLong> confirmedCount = new ConcurrentHashMap<>();
+
+    public List<TransactionRecord> getPublishedRecords() {
+        return publishedRecords;
+    }
+    public long getConfirmCount() {
+        return confirmCount.get();
+    }
+    public long getPublishedCount(String queue) {
+        return publishedCount.getOrDefault(queue, new AtomicLong(0)).get();
+    }
+    public long getConfirmedCount(String queue) {
+        return confirmedCount.getOrDefault(queue, new AtomicLong(0)).get();
+    }
+
+    // Helper class to track transaction and queue
+    public static class TransactionRecord {
+        public final Transaction transaction;
+        public final String queue;
+        public TransactionRecord(Transaction transaction, String queue) {
+            this.transaction = transaction;
+            this.queue = queue;
+        }
+    }
+
+    private void publishWithConfirm(String queue, String body, AMQP.BasicProperties props) throws Exception {
+        long seqNo = channel.getNextPublishSeqNo();
+        outstandingConfirms.put(seqNo, queue);
+        channel.basicPublish("", queue, props, body.getBytes());
+        publishedCount.computeIfAbsent(queue, k -> new AtomicLong()).incrementAndGet();
+    }
 
     @PostConstruct
     public void init() throws Exception {
@@ -49,10 +82,14 @@ public class DirectPublisherService {
 
         // Confirm listeners
         ConfirmCallback ackCallback = (seqNo, multiple) -> {
-            confirmCount.incrementAndGet();
             if (multiple) {
+                outstandingConfirms.headMap(seqNo, true).forEach((k, queue) -> {
+                    confirmedCount.computeIfAbsent(queue, q -> new AtomicLong()).incrementAndGet();
+                });
                 outstandingConfirms.headMap(seqNo, true).clear();
             } else {
+                String queue = outstandingConfirms.get(seqNo);
+                confirmedCount.computeIfAbsent(queue, q -> new AtomicLong()).incrementAndGet();
                 outstandingConfirms.remove(seqNo);
             }
         };
@@ -84,31 +121,6 @@ public class DirectPublisherService {
 
         } catch (Exception e) {
             e.printStackTrace();
-        }
-    }
-
-    private void publishWithConfirm(String queue, String body, AMQP.BasicProperties props) throws Exception {
-        long seqNo = channel.getNextPublishSeqNo();
-        outstandingConfirms.put(seqNo, body);
-        channel.basicPublish("", queue, props, body.getBytes());
-        // Track published transaction
-        publishedRecords.add(new TransactionRecord(objectMapper.readValue(body, Transaction.class), queue));
-    }
-
-    public List<TransactionRecord> getPublishedRecords() {
-        return publishedRecords;
-    }
-    public long getConfirmCount() {
-        return confirmCount.get();
-    }
-
-    // Helper class to track transaction and queue
-    public static class TransactionRecord {
-        public final Transaction transaction;
-        public final String queue;
-        public TransactionRecord(Transaction transaction, String queue) {
-            this.transaction = transaction;
-            this.queue = queue;
         }
     }
 
