@@ -28,13 +28,18 @@ This project is a fun, interactive demo of how to use RabbitMQ exchanges, queues
    ```sh
    git clone https://github.com/yourusername/springrmqtransaction.git
    cd springrmqtransaction
+   ```
 
 
+```
 rabbitmqctl add_user arul password
 rabbitmqctl set_permissions -p / arul ".*" ".*" ".*"
+```
 
-
+```
 mvn clean package
+```
 
-
+```
 mvn spring-boot:run
+```
