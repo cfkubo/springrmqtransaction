@@ -28,7 +28,7 @@ public class TransactionSimulatorRunner implements CommandLineRunner {
             tx.setType(random.nextBoolean() ? "DEPOSIT" : "WITHDRAWAL");
             tx.setTimestamp(LocalDateTime.now());
             publisherService.publishTransaction(tx);
-            // Thread.sleep(1000); // 1 second interval
+            // Thread.sleep(1); // 1 second interval
         }
     }
 }
