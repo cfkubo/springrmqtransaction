@@ -73,12 +73,18 @@ public class DirectPublisherService {
         channel = connection.createChannel();
         channel.confirmSelect();
 
-        // Declare queues (classic, quorum, stream)
+        // Declare fanout exchange
+        channel.exchangeDeclare("transactions", BuiltinExchangeType.FANOUT, true);
+
+        // Declare queues
         channel.queueDeclare("classic.transactions", true, false, false, null);
-        channel.queueDeclare("quorum.transactions", true, false, false,
-                Map.of("x-queue-type", "quorum"));
-        channel.queueDeclare("stream.transactions", true, false, false,
-                Map.of("x-queue-type", "stream"));
+        channel.queueDeclare("quorum.transactions", true, false, false, Map.of("x-queue-type", "quorum"));
+        channel.queueDeclare("stream.transactions", true, false, false, Map.of("x-queue-type", "stream"));
+
+        // Bind queues to exchange
+        channel.queueBind("classic.transactions", "transactions", "");
+        channel.queueBind("quorum.transactions", "transactions", "");
+        channel.queueBind("stream.transactions", "transactions", "");
 
         // Confirm listeners
         ConfirmCallback ackCallback = (seqNo, multiple) -> {
@@ -114,10 +120,11 @@ public class DirectPublisherService {
                     .deliveryMode(2)
                     .build();
 
-            // Publish to all three queues
-            publishWithConfirm("classic.transactions", json, props);
-            publishWithConfirm("quorum.transactions", json, props);
-            publishWithConfirm("stream.transactions", json, props);
+            // Publish to exchange (fanout)
+            long seqNo = channel.getNextPublishSeqNo();
+            outstandingConfirms.put(seqNo, "transactions");
+            channel.basicPublish("transactions", "", props, json.getBytes());
+            publishedCount.computeIfAbsent("transactions", k -> new AtomicLong()).incrementAndGet();
 
         } catch (Exception e) {
             e.printStackTrace();
