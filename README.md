@@ -9,7 +9,7 @@ This project is a fun, interactive demo of how to use RabbitMQ exchanges, queues
 - The exchange routes every transaction to **three different queues**: classic, quorum, and stream.
 - **Publisher confirms** are tracked for reliability.
 - **Consumers** read messages from all three queues, 10 at a time, every second, and acknowledge them.
-- A **Vaadin UI dashboard** shows live counters for published and confirmed messages per queue.
+<!-- - **Vaadin UI dashboard** shows live counters for published and confirmed messages per queue. -->
 
 ## 🛠️ How to build & run
 
