@@ -1,4 +1,4 @@
-# 🐇 SpringRMQ Transaction Simulator & Dashboard
+# 🐇 SpringRMQ Transaction Simulator 
 
 Welcome to **SpringRMQ Transaction Simulator**!  
 This project is a fun, interactive demo of how to use RabbitMQ exchanges, queues, publisher confirms, and Vaadin dashboards in a modern Spring Boot app.
