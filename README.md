@@ -38,6 +38,25 @@ rabbitmqctl set_permissions -p / arul ".*" ".*" ".*"
 rabbitmqctl set_user_tags arul administrator
 ```
 
+## RabbitMQ Queue Policies
+
+Example policies for queue limits and overflow handling:
+
+```sh
+rabbitmqctl set_policy q-pol "quorum.transactions" \
+  '{"max-length":1000,"overflow":"reject-publish"}' \
+  --apply-to queues
+
+rabbitmqctl set_policy s-pol "stream.transactions" \
+  '{"max-length":1000,"overflow":"reject-publish"}' \
+  --apply-to queues
+
+rabbitmqctl set_policy c-pol "classic.transactions" \
+  '{"max-length":10000,"overflow":"reject-publish"}' \
+  --apply-to queues
+```
+
+
 ### Build and Run the Application
 
 ```
