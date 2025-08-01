@@ -30,11 +30,15 @@ This project is a fun, interactive demo of how to use RabbitMQ exchanges, queues
    cd springrmqtransaction
    ```
 
+### Rabbitmq user config 
 
 ```
 rabbitmqctl add_user arul password
 rabbitmqctl set_permissions -p / arul ".*" ".*" ".*"
+rabbitmqctl set_user_tags arul administrator
 ```
+
+### Build and Run the Application
 
 ```
 mvn clean package
@@ -42,4 +46,9 @@ mvn clean package
 
 ```
 mvn spring-boot:run
+```
+### Running multiple instances of application
+
+```
+mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=8085
 ```
