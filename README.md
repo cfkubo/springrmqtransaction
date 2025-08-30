@@ -11,7 +11,6 @@ This project is a fun, interactive demo of how to use RabbitMQ exchanges, queues
 - **Consumers** read messages from all three queues, 10 at a time, every second, and acknowledge them.
 <!-- - **Vaadin UI dashboard** shows live counters for published and confirmed messages per queue. -->
 
-![RabbitMQ Screenshot](static/sample.png)
 
 ## 🛠️ How to build & run
 
